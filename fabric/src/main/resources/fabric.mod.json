@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"clocktown_composite","version":"0.1.0","name":"Clock Town Composite Slice","environment":"client","mixins":["composite.mixins.json"],"depends":{"fabricloader":">=0.19.5","minecraft":"26.3","java":">=25"}}

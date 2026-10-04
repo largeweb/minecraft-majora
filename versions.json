@@ -1,0 +1,8 @@
+{
+  "minecraft": "26.3",
+  "fabric_loader": "0.19.5",
+  "java": 25,
+  "2ship_repository": "https://github.com/HarbourMasters/2ship2harkinian.git",
+  "2ship_commit": "e8757c14a0fc8701461b0458c9ed72c118bcfc67",
+  "libultraship_commit": "7f9b86a593c526fc42261d7fe197100cecf57178"
+}

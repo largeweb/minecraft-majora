@@ -1,0 +1,61 @@
+diff --git a/mm/2s2h/BenPort.cpp b/mm/2s2h/BenPort.cpp
+index 653de66..815fd2b 100644
+--- a/mm/2s2h/BenPort.cpp
++++ b/mm/2s2h/BenPort.cpp
+@@ -1170,6 +1170,7 @@ extern "C" void Graph_StartFrame() {
+ }
+ 
+ // Interpolated frames of a tick are evenly spaced numerators time+step, time+2*step, ... over denom.
++void CompositeLateCamera(std::unordered_map<Mtx*, MtxF>& replacements);
+ void RunCommands(Gfx* Commands, int time, int step, int denom, int count) {
+     auto wnd = std::dynamic_pointer_cast<Fast::Fast3dWindow>(OTRGlobals::Instance->context->GetWindow());
+ 
+@@ -1191,6 +1192,7 @@ void RunCommands(Gfx* Commands, int time, int step, int denom, int count) {
+         std::unordered_map<Mtx*, MtxF> mtx_replacements =
+             (time == denom) ? std::unordered_map<Mtx*, MtxF>() : FrameInterpolation_Interpolate((float)time / denom);
+         intp->mInterpolationT = (float)time / denom;
++        CompositeLateCamera(mtx_replacements);
+         wnd->DrawAndRunGraphicsCommands(Commands, mtx_replacements);
+         intp->mInterpolationIndex++;
+     }
+diff --git a/mm/src/audio/code_8019AF00.c b/mm/src/audio/code_8019AF00.c
+index 6528b47..149ab2c 100644
+--- a/mm/src/audio/code_8019AF00.c
++++ b/mm/src/audio/code_8019AF00.c
+@@ -2074,6 +2074,7 @@ const char sAudioOcarinaUnusedText5[] = "last key is bad !!! %d %d %02X %02X\n";
+ const char sAudioOcarinaUnusedText6[] = "last key step is too short !!! %d:%d %d<%d\n";
+ const char sAudioOcarinaUnusedText7[] = "check is over!!! %d %d %d\n";
+ 
++extern int CompositeOcarinaInput(u16* pad);
+ void AudioOcarina_ReadControllerInput(void) {
+     Input inputs[MAXCONTROLLERS];
+     Input* input = &inputs[0];
+@@ -2095,6 +2096,14 @@ void AudioOcarina_ReadControllerInput(void) {
+ 
+     // 2S2H [Enhancement] Apply custom ocarina controls via GameInteractor
+     sOcarinaInputButtonCur |= GameInteractor_CustomOcarinaControls(input);
++
++    // Minecraft owns the controls in a composite session, including the separate
++    // audio input poll used by lessons and free play. Keep native input otherwise.
++    u16 compositePad;
++    if (CompositeOcarinaInput(&compositePad)) {
++        sOcarinaInputButtonCur = compositePad;
++        sOcarinaInputStickRel.x = sOcarinaInputStickRel.y = 0;
++    }
+ }
+ 
+ /**
+diff --git a/mm/src/code/z_parameter.c b/mm/src/code/z_parameter.c
+index f2c1b84..0ac9dd3 100644
+--- a/mm/src/code/z_parameter.c
++++ b/mm/src/code/z_parameter.c
+@@ -8915,7 +8915,9 @@ TexturePtr sStoryTLUTs[] = {
+     gStoryGiantsLeavingTLUT,
+ };
+ 
++extern int CompositeHideNativeHud(void);
+ void Interface_Draw(PlayState* play) {
++    if (CompositeHideNativeHud()) return;
+     s32 pad;
+     InterfaceContext* interfaceCtx = &play->interfaceCtx;
+     Player* player = GET_PLAYER(play);
